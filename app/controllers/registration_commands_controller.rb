@@ -1,7 +1,7 @@
 class RegistrationCommandsController < ApplicationController
   include Foreman::Controller::RegistrationCommands
 
-  before_action :find_smart_proxy, if: -> { registration_params['smart_proxy_id'] }, only: [:create]
+  before_action :find_smart_proxy, if: -> { registration_params['smart_proxy_id'].presence }, only: [:create]
 
   def form_data
     render json: {
@@ -52,7 +52,10 @@ class RegistrationCommandsController < ApplicationController
   end
 
   def smart_proxies
-    SmartProxy.with_features('Templates') & SmartProxy.with_features('Registration')
+    proxies = SmartProxy.with_features('Templates') & SmartProxy.with_features('Registration')
+    proxies.map do |proxy|
+      { id: proxy.id, name: proxy.name, url: registration_url(proxy) }
+    end
   end
 
   # Extension point for plugins

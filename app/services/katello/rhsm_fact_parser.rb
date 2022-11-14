@@ -76,7 +76,7 @@ module Katello
           os_attributes[:name] = "CentOS"
         end
 
-        ::Operatingsystem.find_by(os_attributes) || ::Operatingsystem.create!(os_attributes)
+        ::Operatingsystem.find_or_create_by(os_attributes)
       end
     end
 
@@ -114,6 +114,18 @@ module Katello
 
     def cores
       facts['cpu.core(s)_per_socket']
+    end
+
+    def kernel_version
+      facts['uname.release']
+    end
+
+    def bios
+      {
+        :vendor => facts['dmi::bios::all_records::vendor'],
+        :version => facts['dmi::bios::all_records::version'],
+        :release_date => facts['dmi::bios::all_records::release_date'],
+      }
     end
 
     private

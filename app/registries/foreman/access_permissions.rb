@@ -193,7 +193,7 @@ Foreman::AccessControl.map do |permission_set|
                                       :'api/v2/filters' => [:index, :show]}
     map.permission :create_filters,  {:filters => [:new, :create],
                                       :'api/v2/filters' => [:create]}
-    map.permission :edit_filters,    {:filters => [:edit, :update, :disable_overriding], :permissions => [:index],
+    map.permission :edit_filters,    {:filters => [:edit, :update, :disable_overriding], :permissions => [:index, :show_resource_types_with_translations],
                                       :'api/v2/filters' => [:update],
                                       :'api/v2/permissions' => [:index, :show, :resource_types]}
     map.permission :destroy_filters, {:filters => [:destroy],
@@ -235,7 +235,7 @@ Foreman::AccessControl.map do |permission_set|
                                                :templates, :overview, :nics, :get_power_state, :preview_host_collection, :welcome, :statuses],
                                     :dashboard => [:OutOfSync, :errors, :active],
                                     :unattended => [:host_template, :hostgroup_template],
-                                     :"api/v2/hosts" => [:index, :show, :get_status, :vm_compute_attributes, :template, :enc],
+                                     :"api/v2/hosts" => [:index, :show, :get_status, :vm_compute_attributes, :template, :templates, :enc],
                                      :"api/v2/interfaces" => [:index, :show],
                                      :"api/v2/host_statuses" => [:index],
                                      :locations =>  [:mismatches],
@@ -361,7 +361,7 @@ Foreman::AccessControl.map do |permission_set|
     map.permission :view_media,    {:media => [:index, :show, :auto_complete_search, :welcome],
                                    :"api/v2/media" => [:index, :show],
     }
-    map.permission :create_media,  {:media => [:new, :create],
+    map.permission :create_media,  {:media => [:new, :create, :clone],
                                    :"api/v2/media" => [:create],
     }
     map.permission :edit_media,    {:media => [:edit, :update],

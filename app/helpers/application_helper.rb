@@ -155,13 +155,17 @@ module ApplicationHelper
     end
   end
 
+  def filter_columns?
+    controller_name == 'hosts' && controller.action_name == 'index'
+  end
+
   def auto_complete_controller_name
     controller.respond_to?(:auto_complete_controller_name) ? controller.auto_complete_controller_name : controller_name
   end
 
   def sort(field, permitted: [], **kwargs)
     kwargs[:url_options] ||= current_url_params(permitted: permitted)
-    super(field, kwargs)
+    super(field, **kwargs)
   end
 
   def help_button
@@ -225,15 +229,26 @@ module ApplicationHelper
 
     content_tag(:div, :class => "btn-group") do
       primary + link_to(content_tag(:span, '', :class => 'caret'), '#', :class => "btn btn-default #{'btn-sm' if primary =~ /btn-sm/} dropdown-toggle", :'data-toggle' => 'dropdown') +
-      content_tag(:ul, :class => "dropdown-menu pull-right") do
-        args.map { |option| content_tag(:li, option) }.join(" ").html_safe
-      end
+        content_tag(:ul, :class => "dropdown-menu pull-right") do
+          args.map do |option|
+            tag_options = nil
+            if option.is_a?(Hash)
+              content = option[:content]
+              tag_options = option[:options]
+            else
+              content = option
+            end
+            content_tag(:li, content, tag_options)
+          end.join(" ").html_safe
+        end
     end
   end
 
   def avatar_image_tag(user, html_options = {})
     if user.avatar_hash.present?
       image_tag("avatars/#{user.avatar_hash}.jpg", html_options)
+    elsif user.disabled?
+      icon_text("ban", "", :kind => "fa", :class => html_options[:class], :title => _("This user is disabled and won't be able to perform any actions. You can edit the user to enable them again."))
     else
       icon_text("user #{html_options[:class]}", "", :kind => "fa")
     end
@@ -385,6 +400,7 @@ module ApplicationHelper
       perPage: Setting['entries_per_page'],
       destroyVmOnHostDelete: Setting['destroy_vm_on_host_delete'],
       labFeatures: Setting[:lab_features],
+      safeMode: Setting[:safemode_render],
     }
   end
 

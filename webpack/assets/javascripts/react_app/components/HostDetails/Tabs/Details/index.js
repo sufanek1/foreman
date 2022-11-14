@@ -1,11 +1,13 @@
 import PropTypes from 'prop-types';
-import React, { useEffect, useState } from 'react';
-import { Grid, Flex, FlexItem, Button } from '@patternfly/react-core';
+import React, { useEffect, useContext } from 'react';
+import { Flex, FlexItem, Button } from '@patternfly/react-core';
 import { registerCoreCards } from './CardRegistry';
 import Slot from '../../../common/Slot';
 import { STATUS } from '../../../../constants';
 import '../Overview/styles.css';
+import './styles.css';
 import { translate as __ } from '../../../../common/I18n';
+import { CardExpansionContext } from '../../CardExpansionContext';
 
 const DetailsTab = ({ response, status, hostName }) => {
   useEffect(() => {
@@ -15,30 +17,45 @@ const DetailsTab = ({ response, status, hostName }) => {
     registerCoreCards();
     return () => document.body.classList.remove('pf-gray-background');
   }, []);
-  const [isExpandedGlobal, setExpandedGlobal] = useState(true);
+  const { cardExpandStates, dispatch } = useContext(CardExpansionContext);
+  const areAllCardsExpanded = Object.values(cardExpandStates).every(
+    value => value === true
+  );
+
+  const expandAllCards = () => dispatch({ type: 'expandAll' });
+
+  const collapseAllCards = () => dispatch({ type: 'collapseAll' });
+
+  const buttonText = areAllCardsExpanded
+    ? __('Collapse all cards')
+    : __('Expand all cards');
 
   return (
     <div className="host-details-tab-item details-tab">
-      <Flex>
+      <Flex style={{ marginBottom: '1rem' }}>
         <FlexItem align={{ default: 'alignRight' }}>
           <Button
-            onClick={() => setExpandedGlobal(prev => !prev)}
+            ouiaId="expand-button"
+            onClick={areAllCardsExpanded ? collapseAllCards : expandAllCards}
             variant="link"
           >
-            {__('Expand/Collapse  all')}
+            {buttonText}
           </Button>
         </FlexItem>
       </Flex>
-      <Grid hasGutter>
+      <Flex
+        direction={{ default: 'column' }}
+        flexWrap={{ default: 'wrap' }}
+        className="details-tab-flex-container"
+      >
         <Slot
           hostDetails={response}
           status={status}
           hostName={hostName}
           id="host-tab-details-cards"
-          isExpandedGlobal={isExpandedGlobal}
           multi
         />
-      </Grid>
+      </Flex>
     </div>
   );
 };

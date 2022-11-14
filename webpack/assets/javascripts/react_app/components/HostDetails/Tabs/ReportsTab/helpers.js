@@ -19,7 +19,7 @@ import {
 } from '@patternfly/react-icons';
 import { openConfirmModal } from '../../../ConfirmModal';
 import { APIActions } from '../../../../redux/API';
-import { translate as __ } from '../../../../common/I18n';
+import { sprintf, translate as __ } from '../../../../common/I18n';
 import RelativeDateTime from '../../../common/dates/RelativeDateTime';
 
 const statusMapper = {
@@ -92,7 +92,10 @@ export const ActionFormatter = ({ id, can_delete }, fetchReports) => {
               key: `report-${id}-DELETE`,
               successToast: success => __('Report was successfully deleted'),
               errorToast: error =>
-                __(`There was some issue deleting the report: ${error}`),
+                sprintf(
+                  __('There was some issue deleting the report: %s'),
+                  error
+                ),
               handleSuccess: fetchReports,
             })
           ),
@@ -104,6 +107,7 @@ export const ActionFormatter = ({ id, can_delete }, fetchReports) => {
   };
   const dropdownItems = [
     <DropdownItem
+      ouiaId="action-dropdown-item"
       key="action"
       component="button"
       onClick={dispatchConfirm}
@@ -116,6 +120,7 @@ export const ActionFormatter = ({ id, can_delete }, fetchReports) => {
     <Flex>
       <FlexItem align={{ default: 'alignRight' }}>
         <Dropdown
+          ouiaId="action-dropdown"
           onSelect={v => setOpen(!v)}
           toggle={<KebabToggle onToggle={setOpen} id="toggle-action" />}
           isOpen={isOpen}
@@ -129,6 +134,7 @@ export const ActionFormatter = ({ id, can_delete }, fetchReports) => {
 
 export const reportToShowFormatter = ({ reported_at, can_view, id }) => (
   <Button
+    ouiaId="report-to-show-button"
     variant="link"
     component="a"
     isInline

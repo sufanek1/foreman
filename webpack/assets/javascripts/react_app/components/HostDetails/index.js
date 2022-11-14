@@ -2,6 +2,7 @@
 import PropTypes from 'prop-types';
 import React, { useEffect } from 'react';
 import { useSelector, shallowEqual } from 'react-redux';
+import { Link } from 'react-router-dom';
 import {
   Flex,
   FlexItem,
@@ -9,7 +10,7 @@ import {
   Tab,
   Tabs,
   GridItem,
-  Badge,
+  Label,
   Title,
   Text,
   TextVariants,
@@ -40,6 +41,7 @@ import RedirectToEmptyHostPage from './EmptyState';
 import BreadcrumbBar from '../BreadcrumbBar';
 import { foremanUrl } from '../../common/helpers';
 import { useForemanSettings } from '../../Root/Context/ForemanContext';
+import { CardExpansionContextWrapper } from './CardExpansionContext';
 
 const HostDetails = ({
   match: {
@@ -129,6 +131,7 @@ const HostDetails = ({
                       <SkeletonLoader status={status || STATUS.PENDING}>
                         {response && (
                           <Title
+                            ouiaId="hostname-truncate-title"
                             className="hostname-truncate"
                             headingLevel="h5"
                             size="2xl"
@@ -140,13 +143,50 @@ const HostDetails = ({
                     </div>
                     <Split style={{ display: 'inline-flex' }} hasGutter>
                       <SplitItem>
-                        <HostGlobalStatus hostName={id} />
+                        <HostGlobalStatus
+                          hostName={id}
+                          canForgetStatuses={
+                            !!response?.permissions?.forget_status_hosts
+                          }
+                        />
                       </SplitItem>
                       <SplitItem>
-                        <Badge> {response?.operatingsystem_name}</Badge>
+                        <Label
+                          isCompact
+                          color="blue"
+                          render={({ className, content, componentRef }) => (
+                            <Link
+                              to={`/hosts?search=os_title="${response?.operatingsystem_name}"`}
+                              className={className}
+                              innerRef={componentRef}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {content}
+                            </Link>
+                          )}
+                        >
+                          {response?.operatingsystem_name}
+                        </Label>
                       </SplitItem>
                       <SplitItem>
-                        <Badge>{response?.architecture_name}</Badge>
+                        <Label
+                          isCompact
+                          color="blue"
+                          render={({ className, content, componentRef }) => (
+                            <Link
+                              to={`/hosts?search=architecture=${response?.architecture_name}`}
+                              className={className}
+                              innerRef={componentRef}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {content}
+                            </Link>
+                          )}
+                        >
+                          {response?.architecture_name}
+                        </Label>
                       </SplitItem>
                     </Split>
                   </>
@@ -174,10 +214,13 @@ const HostDetails = ({
             status={status || STATUS.PENDING}
           >
             {response && (
-              <Text component={TextVariants.span}>
+              <Text ouiaId="date-text" component={TextVariants.span}>
                 <RelativeDateTime date={response.created_at} defaultValue="N/A">
                   {date =>
-                    sprintf(__('Created %s by %s'), date, response.owner_name)
+                    sprintf(__('Created %(date)s by %(owner)s'), {
+                      date,
+                      owner: response.owner_name,
+                    })
                   }
                 </RelativeDateTime>{' '}
                 <RelativeDateTime date={response.updated_at} defaultValue="N/A">
@@ -188,28 +231,31 @@ const HostDetails = ({
           </SkeletonLoader>
         </div>
         {tabs && (
-          <TabRouter
-            response={response}
-            hostName={id}
-            status={status}
-            tabs={tabs}
-            router={history}
-          >
-            <Tabs
-              activeKey={activeTab}
-              className={`host-details-tabs tab-width-${
-                isNavCollapsed ? '138' : '263'
-              }`}
+          <CardExpansionContextWrapper>
+            <TabRouter
+              response={response}
+              hostName={id}
+              status={status}
+              tabs={tabs}
+              router={history}
             >
-              {filteredTabs.map(tab => (
-                <Tab
-                  key={tab}
-                  eventKey={tab}
-                  title={slotMetadata?.[tab]?.title || tab}
-                />
-              ))}
-            </Tabs>
-          </TabRouter>
+              <Tabs
+                ouiaId="host-details-tabs"
+                activeKey={activeTab}
+                className={`host-details-tabs tab-width-${
+                  isNavCollapsed ? '138' : '263'
+                }`}
+              >
+                {filteredTabs.map(tab => (
+                  <Tab
+                    key={tab}
+                    eventKey={tab}
+                    title={slotMetadata?.[tab]?.title || tab}
+                  />
+                ))}
+              </Tabs>
+            </TabRouter>
+          </CardExpansionContextWrapper>
         )}
       </PageSection>
     </>

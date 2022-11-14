@@ -15,7 +15,7 @@ import SkeletonLoader from '../../../../../common/SkeletonLoader';
 import DefaultLoaderEmptyState from '../../../../DetailsCard/DefaultLoaderEmptyState';
 import { STATUS } from '../../../../../../constants';
 
-const SystemPropertiesCard = ({ status, isExpandedGlobal, hostDetails }) => {
+const SystemPropertiesCard = ({ status, hostDetails }) => {
   const {
     name,
     uuid,
@@ -32,7 +32,7 @@ const SystemPropertiesCard = ({ status, isExpandedGlobal, hostDetails }) => {
       overrideGridProps={{ rowSpan: 2 }}
       header={__('System properties')}
       expandable
-      isExpandedGlobal={isExpandedGlobal}
+      masonryLayout
     >
       <DescriptionList isCompact>
         <DescriptionListGroup>
@@ -153,7 +153,6 @@ const SystemPropertiesCard = ({ status, isExpandedGlobal, hostDetails }) => {
 
 SystemPropertiesCard.propTypes = {
   status: PropTypes.string,
-  isExpandedGlobal: PropTypes.bool,
   hostDetails: PropTypes.shape({
     hostgroup_name: PropTypes.string,
     model_name: PropTypes.string,
@@ -166,13 +165,11 @@ SystemPropertiesCard.propTypes = {
     domain_name: PropTypes.string,
     created_at: PropTypes.string,
     updated_at: PropTypes.string,
-    reported_data: PropTypes.object,
   }),
 };
 
 SystemPropertiesCard.defaultProps = {
   status: STATUS.PENDING,
-  isExpandedGlobal: false,
   hostDetails: {
     name: undefined,
     model_name: undefined,
@@ -185,7 +182,6 @@ SystemPropertiesCard.defaultProps = {
     domain_name: undefined,
     created_at: undefined,
     updated_at: undefined,
-    reported_data: { boot_time: undefined },
   },
 };
 

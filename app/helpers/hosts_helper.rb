@@ -417,10 +417,6 @@ module HostsHelper
     end
   end
 
-  def power_status_visible?
-    Setting[:host_power_status]
-  end
-
   def host_breadcrumb
     breadcrumbs(resource_url: "/api/v2/hosts?thin=true'")
   end
@@ -440,5 +436,24 @@ module HostsHelper
         :errors => item.errors.to_hash,
       }
     end
+  end
+
+  def virtual?(host)
+    return unless host.reported_data
+
+    host.reported_data.virtual ? _('Yes') : _('No')
+  end
+
+  def humanize_bytes(number, from: nil)
+    return unless number
+
+    number = case from
+             when :mega
+               number * 1.megabyte
+             else
+               number
+             end
+
+    number_to_human_size(number)
   end
 end

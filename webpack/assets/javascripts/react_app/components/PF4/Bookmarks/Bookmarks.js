@@ -43,19 +43,19 @@ const Bookmarks = ({
   };
 
   const dropdownItems = [
-    addBookmarkItem({ canCreate, setModalOpen }),
+    canCreate && addBookmarkItem({ setModalOpen }),
     savedBookmarksItems({
       bookmarks,
       onBookmarkClick,
       status,
       errors,
     }),
-    manageBookmarksItem({
-      canCreate,
-      onClick: manageBookmarks,
-      documentationUrl,
-    }),
-  ];
+    canCreate &&
+      manageBookmarksItem({
+        onClick: manageBookmarks,
+        documentationUrl,
+      }),
+  ].filter(i => i);
 
   return (
     <React.Fragment>
@@ -67,6 +67,7 @@ const Bookmarks = ({
         bookmarks={bookmarks}
       />
       <Dropdown
+        ouiaId="bookmarks-dropdown"
         isOpen={isDropdownOpen}
         onSelect={() => setIsDropdownOpen(false)}
         toggle={
@@ -74,6 +75,7 @@ const Bookmarks = ({
             onToggle={onToggle}
             title={__('Bookmarks')}
             aria-label="bookmarks dropdown toggle"
+            ouiaId="bookmarks-dropdown-toggle"
           >
             <OutlinedBookmarkIcon />
           </DropdownToggle>

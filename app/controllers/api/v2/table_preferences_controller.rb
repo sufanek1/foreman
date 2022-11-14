@@ -25,20 +25,20 @@ module Api
       def_param_group :table_preference do
         param :user_id, String, :desc => N_('ID of the user'), :required => true
         param :name, String, :desc => N_("Name of the table"), :required => true
-        param :columns, Array, :desc => N_("List of user selected columns")
+        param :columns, Array, :desc => N_("List of user selected columns"), :required => true
       end
 
       api :POST, "/users/:user_id/table_preferences/", N_("Creates a table preference for a given table")
       param_group :table_preference
       def create
-        @table_preference = @user.table_preferences.build(:name => params[:name], :columns => params[:columns])
+        @table_preference = @user.table_preferences.build(:name => params[:name], :columns => params[:columns]&.uniq)
         process_response @table_preference.save
       end
 
       api :PUT, "/users/:user_id/table_preferences/:name", N_("Updates a table preference for a given table")
       param_group :table_preference
       def update
-        process_response @table_preference.update(:columns => params[:columns])
+        process_response @table_preference.update(:columns => params[:columns]&.uniq)
       end
 
       api :DELETE, "/users/:user_id/table_preferences/:name/", N_("Delete a table preference for a given table")

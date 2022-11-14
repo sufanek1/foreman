@@ -108,14 +108,21 @@ module Foreman
               a line end, if not an extra trailing line end is appended automatically."
             required :filename, String, desc: 'the file path to store the content to'
             required :content, String, desc: 'content to be stored'
+            keyword :verbatim, [true, false], desc: 'Controls whether the file should be put on disk as-is or if variables should be replaced by shell before the file is written out', default: false
             returns String, desc: 'String representing the shell command'
-            example "save_to_file('/etc/motd', \"hello\\nworld\\n\") # => 'cat << EOF > /etc/motd\\nhello\\nworld\\nEOF'"
+            example "save_to_file('/etc/motd', \"hello\\nworld\\n\") # => 'cat << EOF-0e4f089a > /etc/motd\\nhello\\nworld\\nEOF-0e4f089a'"
           end
-          def save_to_file(filename, content)
-            if !content || content.ends_with?("\n")
-              "cat << EOF > #{filename}\n#{content}EOF"
+          def save_to_file(filename, content, verbatim: false)
+            filename = filename.shellescape
+            delimiter = 'EOF-' + Digest::SHA512.hexdigest(filename)[0..7]
+            if content.empty?
+              "cp /dev/null #{filename}"
+            elsif verbatim
+              content = Base64.encode64(content)
+              "cat << #{delimiter} | base64 -d > #{filename}\n#{content}#{delimiter}"
             else
-              "cat << EOF > #{filename}\n#{content}\nEOF"
+              content += "\n" unless content.end_with?("\n")
+              "cat << #{delimiter} > #{filename}\n#{content}#{delimiter}"
             end
           end
 
@@ -424,6 +431,15 @@ module Foreman
             example 'foreman_short_version # => "3.4"'
           end
           def foreman_short_version
+            Foreman::Version.new.short
+          end
+
+          apipie :method, 'Returns a short version of Foreman as a product' do
+            desc 'Returns a string representing the short version (X.Y) of Foreman as a product'
+            returns String
+            example 'product_short_version # => "3.4"'
+          end
+          def product_short_version
             Foreman::Version.new.short
           end
 
