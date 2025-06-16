@@ -96,10 +96,11 @@ module ComputeResourcesVmsHelper
 
   def openstack_available_actions(vm, authorizer = nil)
     actions = []
-    if vm.state == 'ACTIVE'
+    case vm.state
+    when 'ACTIVE'
       actions << vm_power_action(vm, authorizer)
       actions << vm_pause_action(vm, authorizer)
-    elsif vm.state == 'PAUSED'
+    when 'PAUSED'
       actions << vm_pause_action(vm, authorizer)
     else
       actions << vm_power_action(vm, authorizer)
@@ -169,51 +170,18 @@ module ComputeResourcesVmsHelper
     selectable_f form, :resource_pool, resource_pools, options, :class => "col-md-2", :label => _('Resource pool'), :disabled => disabled
   end
 
-  def vms_table
+  def vms_table(&block)
     data = if @compute_resource.supports_vms_pagination?
              { :table => 'server', :source => compute_resource_vms_path }
            else
              { :table => 'inline' }
            end
 
-    content_tag :table, :class => table_css_classes, :width => '100%', :data => data do
-      yield
-    end
-  end
-
-  # Really counting vms is as expansive as loading them all, especially when
-  # a filter is in place. So we create a fake count to get table pagination to work.
-  def ovirt_fake_vms_count
-    params['start'].to_i + 1 + [@vms.length, params['length'].to_i].min
-  end
-
-  def ovirt_storage_domains_for_select(compute_resource)
-    compute_resource.storage_domains.map { |sd| OpenStruct.new({ id: sd.id, label: "#{sd.name} (" + _("Available") + ": #{sd.available.to_i / 1.gigabyte} GiB, " + _("Used") + ": #{sd.used.to_i / 1.gigabyte} GiB)" }) }
-  end
-
-  def ovirt_vms_data
-    data = @vms.map do |vm|
-      [
-        link_to_if_authorized(html_escape(vm.name), hash_for_compute_resource_vm_path(:compute_resource_id => @compute_resource, :id => vm.id).merge(:auth_object => @compute_resource, :auth_action => 'view', :authorizer => authorizer)),
-        vm.cores,
-        number_to_human_size(vm.memory),
-        "<span #{vm_power_class(vm.ready?)}>#{vm_state(vm)}</span>",
-        action_buttons(vm_power_action(vm, authorizer),
-          vm_import_action(vm), vm_associate_link(vm),
-          display_delete_if_authorized(hash_for_compute_resource_vm_path(:compute_resource_id => @compute_resource, :id => vm.id).merge(:auth_object => @compute_resource, :authorizer => authorizer))),
-      ]
-    end
-    JSON.fast_generate(data).html_safe
+    content_tag :table, :class => table_css_classes, :width => '100%', :data => data, &block
   end
 
   def vm_delete_action(vm, authorizer = nil)
     display_delete_if_authorized(hash_for_compute_resource_vm_path(:compute_resource_id => @compute_resource, :id => vm.identity).merge(:auth_object => @compute_resource, :authorizer => authorizer), :class => 'btn btn-danger')
-  end
-
-  def vsphere_scsi_controllers(compute_resource)
-    scsi_controllers = {}
-    compute_resource.scsi_controller_types.each { |type| scsi_controllers[type[:key]] = type[:title] }
-    scsi_controllers
   end
 
   def new_vm?(host)

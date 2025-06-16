@@ -1,7 +1,5 @@
 import React from 'react';
-import { shallow } from '@theforeman/test';
-
-jest.useFakeTimers();
+import { shallow } from 'enzyme';
 
 export default {
   mockStorage: () => {
@@ -80,6 +78,7 @@ const resolveDispatch = async (action, depth) => {
   if (depth && typeof action === 'function') {
     const dispatch = jest.fn();
     await action(dispatch);
+    jest.useFakeTimers();
     jest.runOnlyPendingTimers();
 
     return Promise.all(
@@ -148,3 +147,126 @@ export const testSelectorsSnapshotWithFixtures = fixtures =>
   Object.entries(fixtures).forEach(([description, selectorRunner]) =>
     it(description, () => expect(selectorRunner()).toMatchSnapshot())
   );
+
+export const initMockStore = {
+  bookmarksPF4: {},
+  hosts: {
+    storage: {
+      vmware: {
+        controllers: [],
+        volumes: [],
+      },
+    },
+  },
+  notifications: {
+    isDrawerOpen: null,
+    expandedGroup: null,
+    hasUnreadMessages: false,
+  },
+  toasts: {},
+  passwordStrength: {
+    password: '',
+    passwordConfirmation: '',
+  },
+  breadcrumbBar: {
+    resourceSwitcherItems: [],
+    isLoadingResources: false,
+    isSwitcherOpen: false,
+    resourceUrl: null,
+    requestError: null,
+    currentPage: null,
+    searchQuery: '',
+    pages: null,
+    titleReplacement: null,
+  },
+  layout: {
+    items: [],
+    isLoading: false,
+    isCollapsed: false,
+  },
+  diffModal: {
+    isOpen: false,
+    diff: '',
+    title: '',
+    diffViewType: 'split',
+  },
+  editor: {
+    hosts: [],
+    filteredHosts: [],
+    diffViewType: 'split',
+    editorName: 'editor',
+    errorText: '',
+    isFetchingHosts: false,
+    isLoading: false,
+    isMasked: false,
+    isMaximized: false,
+    isRendering: false,
+    isSearchingHosts: false,
+    isSelectOpen: false,
+    keyBinding: 'Default',
+    mode: 'Ruby',
+    previewResult: '',
+    renderedEditorValue: '',
+    readOnly: false,
+    searchQuery: '',
+    selectedHost: {
+      id: '',
+      name: '',
+    },
+    selectedView: 'input',
+    showError: false,
+    templateClass: '',
+    theme: 'Monokai',
+    autocompletion: true,
+    liveAutocompletion: false,
+    value: '',
+    kind: '',
+  },
+  templates: {
+    scheduleInProgress: false,
+    polling: false,
+    dataUrl: null,
+  },
+  factChart: {
+    modalToDisplay: {},
+  },
+  settingRecords: {
+    settings: {},
+    editing: null,
+  },
+  personalAccessTokens: {
+    tokens: [],
+  },
+  confirmModal: {
+    isOpen: false,
+  },
+  router: {
+    location: {
+      pathname: '/users/login',
+      search: '',
+      hash: '',
+      query: {},
+    },
+    action: 'POP',
+  },
+  extendable: {},
+  auditsPage: {
+    data: {
+      isLoading: true,
+      hasError: false,
+      hasData: false,
+      message: {
+        type: 'empty',
+        text: '',
+      },
+    },
+    query: {
+      page: 1,
+      searchQuery: '',
+      itemCount: 0,
+    },
+  },
+  foremanModals: {},
+  intervals: {},
+  API: {},
+};

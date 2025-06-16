@@ -1,6 +1,5 @@
 import React from 'react';
 import { render, fireEvent, screen, act } from '@testing-library/react';
-import { mount } from '@theforeman/test';
 
 import { testComponentSnapshotsWithFixtures } from '../../../common/testHelpers';
 
@@ -37,7 +36,7 @@ describe('BreadcrumbBar', () => {
       expect(props.closeSwitcher.mock.calls).toHaveLength(0);
       expect(props.loadSwitcherResourcesByResource.mock.calls).toHaveLength(0);
 
-      act(async () =>
+      await act(async () =>
         fireEvent.click(screen.getByLabelText('open breadcrumb switcher'))
       );
       expect(props.openSwitcher.mock.calls).toHaveLength(1);

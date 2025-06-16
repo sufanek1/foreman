@@ -42,12 +42,11 @@ module Api
       end
 
       before_action :setup_has_many_params, :only => [:create, :update]
-      before_action :check_media_type
 
       layout 'api/v2/layouts/index_layout', :only => :index
 
       helper_method :root_node_name, :metadata_total, :metadata_subtotal, :metadata_search,
-        :metadata_order, :metadata_by, :metadata_page, :metadata_per_page
+        :metadata_order, :metadata_by, :metadata_page, :metadata_per_page, :index_node_permissions_snippet
       def root_node_name
         @root_node_name ||= if Rabl.configuration.use_controller_name_as_json_root
                               controller_name.split('/').last
@@ -56,6 +55,21 @@ module Api
                             else
                               Rabl.configuration.json_root_default_name
                             end
+      end
+
+      # may be extended by plugins to add additional permissions
+      def index_node_permissions
+        {
+          :can_create => can_create?,
+          :can_edit => authorized_for(:controller => controller_name, :action => 'edit'),
+        }
+      end
+
+      def index_node_permissions_snippet
+        perms = index_node_permissions.map do |key, value|
+          "#{key.to_json}: #{value.to_json}"
+        end
+        perms.join(",")
       end
 
       def metadata_total
@@ -142,16 +156,17 @@ module Api
         append_array_of_ids(params)             # unwrapped params
       end
 
-      def check_media_type
-        if (request.post? || request.put?) && request.media_type != "application/json"
-          render_error(:unsupported_media_type, :status => :unsupported_media_type)
-        end
-      end
-
       def render_error(error, options = { })
         options = set_error_details(error, options)
         render options.merge(:template => "api/v2/errors/#{error}",
-                             :layout   => 'api/v2/layouts/error_layout')
+          :layout => 'api/v2/layouts/error_layout')
+      end
+
+      def self.hide_taxonomy_options
+        resource_description do
+          param :location_id, Integer, :show => false
+          param :organization_id, Integer, :show => false
+        end
       end
     end
   end

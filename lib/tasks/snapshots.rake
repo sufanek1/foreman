@@ -34,9 +34,13 @@ namespace :snapshots do
       Foreman.settings.load
       Setting[:unattended_url] = "http://foreman.example.com"
       Setting[:foreman_url] = "http://foreman.example.com"
+      Setting[:ct_location] = "/usr/bin/cat"
+      Setting[:ct_arguments] = []
 
       User.current = FactoryBot.build(:user, :admin)
       admin = FactoryBot.create(:user, :admin, password: 'password123', auth_source: FactoryBot.create(:auth_source_ldap))
+
+      failed_snapshots = []
 
       User.as(admin.login) do
         Foreman::TemplateSnapshotService.templates.each do |template|
@@ -45,16 +49,23 @@ namespace :snapshots do
             dir = File.dirname(snapshot_path)
             FileUtils.mkdir_p(dir) unless File.directory?(dir)
 
-            snapshot = Foreman::TemplateSnapshotService.render_template(template, host)
-            if snapshot =~ /^#cloud-config/
-              puts "Validating YAML #{snapshot_path}"
-              YAML.safe_load(snapshot)
+            begin
+              snapshot = Foreman::TemplateSnapshotService.render_template(template, host)
+              if snapshot =~ /^#cloud-config/
+                puts "Validating YAML #{snapshot_path}"
+                YAML.safe_load(snapshot)
+              end
+            rescue StandardError => ex
+              warn "Snapshot #{snapshot_path} failed with #{ex}"
+              failed_snapshots << snapshot_path
             end
             puts "Writing #{snapshot_path}"
             File.write(snapshot_path, snapshot)
           end
         end
       end
+
+      raise "#{failed_snapshots.count} snapshots failed generation or validation. Please inspect the output to see the details." unless failed_snapshots.empty?
     end
   end
 end

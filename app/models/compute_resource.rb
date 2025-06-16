@@ -44,7 +44,6 @@ class ComputeResource < ApplicationRecord
   def self.supported_providers
     {
       'Libvirt'   => 'Foreman::Model::Libvirt',
-      'Ovirt'     => 'Foreman::Model::Ovirt',
       'EC2'       => 'Foreman::Model::EC2',
       'Vmware'    => 'Foreman::Model::Vmware',
       'Openstack' => 'Foreman::Model::Openstack',
@@ -75,7 +74,7 @@ class ComputeResource < ApplicationRecord
   end
 
   def self.providers_requiring_url
-    _("Libvirt, oVirt and OpenStack")
+    _("Libvirt and OpenStack")
   end
 
   def self.provider_class(name)
@@ -272,10 +271,6 @@ class ComputeResource < ApplicationRecord
     raise ::Foreman::Exception.new(N_("Not implemented for %s"), provider_friendly_name)
   end
 
-  def available_vnic_profiles(cluster_id = nil)
-    raise ::Foreman::Exception.new(N_("Not implemented for %s"), provider_friendly_name)
-  end
-
   def available_clusters
     raise ::Foreman::Exception.new(N_("Not implemented for %s"), provider_friendly_name)
   end
@@ -315,7 +310,7 @@ class ComputeResource < ApplicationRecord
     []
   end
 
-  # this method is overwritten for Libvirt and OVirt
+  # this method is overwritten for Libvirt
   def editable_network_interfaces?
     networks.any?
   end
@@ -331,21 +326,12 @@ class ComputeResource < ApplicationRecord
     attrs[:setpw] = nil
   end
 
-  # this method is overwritten for Libvirt, oVirt & VMWare
+  # this method is overwritten for Libvirt & VMWare
   def display_type=(_)
   end
 
-  # this method is overwritten for Libvirt, oVirt & VMWare
+  # this method is overwritten for Libvirt & VMWare
   def display_type
-    nil
-  end
-
-  # this method is overwritten for oVirt
-  def keyboard_layout=(_)
-  end
-
-  # this method is overwritten for oVirt
-  def keyboard_layout
     nil
   end
 
@@ -375,8 +361,7 @@ class ComputeResource < ApplicationRecord
     vm_attrs = vm_attrs.reject { |k, v| k == :id }
 
     vm_attrs = set_vm_volumes_attributes(vm, vm_attrs)
-    vm_attrs = set_vm_interfaces_attributes(vm, vm_attrs)
-    vm_attrs
+    set_vm_interfaces_attributes(vm, vm_attrs)
   end
 
   def vm_ready(vm)
@@ -397,6 +382,68 @@ class ComputeResource < ApplicationRecord
 
   def normalize_vm_attrs(vm_attrs)
     vm_attrs
+  end
+
+  # Returns a hash of firmware type identifiers and their corresponding labels for use in the VM creation form.
+  #
+  # @return [Hash<String, String>] a hash mapping firmware type identifiers to labels.
+  def firmware_types
+    {
+      "automatic" => N_("Automatic"),
+      "bios" => N_("BIOS"),
+      "uefi" => N_("UEFI"),
+      "uefi_secure_boot" => N_("UEFI Secure Boot"),
+    }.freeze
+  end
+
+  # Converts the firmware type from a VM object to the Foreman-compatible format.
+  #
+  # @param firmware [String] The firmware type from the VM object.
+  # @param secure_boot [Boolean] Indicates if secure boot is enabled for the VM.
+  # @return [String] The converted firmware type.
+  def firmware_type(firmware, secure_boot)
+    if firmware == 'efi'
+      secure_boot ? 'uefi_secure_boot' : 'uefi' # Adjust for secure boot
+    else
+      firmware
+    end
+  end
+
+  # Converts a firmware type from Foreman format to a CR-compatible format.
+  # If no specific type is provided, defaults to 'bios'.
+  #
+  # @param firmware_type [String] The firmware type in Foreman format.
+  # @return [String] The converted firmware type.
+  def normalize_firmware_type(firmware_type)
+    case firmware_type
+    when 'uefi', 'uefi_secure_boot'
+      'efi'
+    else
+      'bios'
+    end
+  end
+
+  # Resolves the firmware setting when it is 'automatic' based on the provided firmware_type, or defaults to 'bios'.
+  #
+  # @param firmware [String] The current firmware setting.
+  # @param firmware_type [String] The type of firmware to be used if firmware is 'automatic'.
+  # @return [String] the resolved firmware.
+  def resolve_automatic_firmware(firmware, firmware_type)
+    return firmware unless firmware == 'automatic'
+    firmware_type.presence || 'bios'
+  end
+
+  # Processes firmware attributes to configure firmware and secure boot settings.
+  #
+  # @param firmware [String] The firmware setting to be processed.
+  # @param firmware_type [String] The firmware type based on the provided PXE Loader.
+  # @return [Hash] A hash containing the processed firmware attributes.
+  def process_firmware_attributes(firmware, firmware_type)
+    firmware = resolve_automatic_firmware(firmware, firmware_type)
+
+    attrs = generate_secure_boot_settings(firmware)
+    attrs[:firmware] = normalize_firmware_type(firmware)
+    attrs
   end
 
   protected

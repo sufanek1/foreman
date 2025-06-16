@@ -41,7 +41,7 @@ class ComputeResourceHostImporterTest < ActiveSupport::TestCase
 
       test 'imports the VM with all parameters' do
         expected_compute_attributes = {
-          'network' => 'network1',
+          'network' => 'dvportgroup-123456',
           'type' => 'VirtualE1000',
         }
 
@@ -75,11 +75,11 @@ class ComputeResourceHostImporterTest < ActiveSupport::TestCase
 
   context 'on libvirt' do
     let(:compute_resource) { FactoryBot.build(:libvirt_cr) }
-    let(:uuid) { 'fog-449765558356062' }
+    let(:uuid) { '6695eb01-f6a4-8304-79aa-97f2502e193f' }
 
     test 'imports the VM with all parameters' do
-      assert_equal 'fog-dom1', host.name
-      assert_equal 'dom.uuid', host.uuid
+      assert_equal 'test', host.name
+      assert_equal uuid, host.uuid
       assert_nil host.domain
       assert_equal 'aa:bb:cc:dd:ee:ff', host.mac
       assert_empty host.primary_interface.compute_attributes
@@ -132,20 +132,6 @@ class ComputeResourceHostImporterTest < ActiveSupport::TestCase
       assert_equal @domain, host.domain
       assert_equal floating_ip, host.ip
       assert_empty host.primary_interface.compute_attributes
-      assert_equal compute_resource, host.compute_resource
-    end
-  end
-
-  context 'on ovirt' do
-    let(:compute_resource) { FactoryBot.build(:ovirt_cr) }
-    let(:uuid) { '52b9406e-cf66-4867-8655-719a094e324c' }
-
-    test 'imports the VM with all parameters' do
-      assert_equal 'vm01', host.name
-      assert_equal uuid, host.uuid
-      assert_nil host.domain
-      assert_equal '00:1a:4a:23:1b:8f', host.mac
-      assert_equal host.primary_interface.compute_attributes, { "name" => "nic1", "network" => "00000000-0000-0000-0000-000000000009", "interface" => "virtio", "vnic_profile" => "871f3a06-ef53-4ab1-922f-5aa2bea2e94e" }
       assert_equal compute_resource, host.compute_resource
     end
   end

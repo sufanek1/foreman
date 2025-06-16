@@ -37,11 +37,11 @@ class ComputeProfileJSTest < IntegrationTestWithJavascript
     # amazon123 exists in fixture compute_attributes.yml
     click_link("amazon123 (eu-west-1-EC2)")
 
-    assert page.has_selector?('#breadcrumb .active', :text => compute_profiles(:one).name), "#{compute_profiles(:one).name} was expected in the breadcrumb active, but was not found"
-    selected_profile = find("#s2id_compute_attribute_compute_profile_id .select2-chosen").text
+    assert page.has_selector?('.pf-v5-c-page__main-breadcrumb .active', :text => compute_profiles(:one).name), "#{compute_profiles(:one).name} was expected in the breadcrumb active, but was not found"
+    selected_profile = select2_chosen_selector('compute_attribute_compute_profile_id').text
     assert_equal compute_profiles(:one).name, selected_profile
 
-    selected_compute = find("#s2id_compute_attribute_compute_resource_id .select2-chosen").text
+    selected_compute = select2_chosen_selector('compute_attribute_compute_resource_id').text
     assert_equal "amazon123 (eu-west-1-EC2)", selected_compute
 
     click_button('Submit')
@@ -51,17 +51,16 @@ class ComputeProfileJSTest < IntegrationTestWithJavascript
   test "create compute profile" do
     visit compute_profiles_path()
     click_on("Create Compute Profile")
+    work_around_selenium_file_detector_bug
     fill_in('compute_profile_name', :with => 'test')
     click_on("Submit")
-    assert click_link(compute_resources(:ovirt).to_s)
-    selected_profile = find("#s2id_compute_attribute_compute_profile_id .select2-chosen").text
-    assert select2('hwp_small', :from => 'compute_attribute_vm_attrs_template')
-    wait_for_ajax
+    assert click_link(compute_resources(:mycompute).to_s)
+    selected_profile = select2_chosen_selector('compute_attribute_compute_profile_id').text
     assert click_button("Submit")
     visit compute_profile_path(selected_profile)
-    assert click_link(compute_resources(:ovirt).to_s)
-    assert_equal  "512 MB", find_field('compute_attribute_vm_attrs_memory').value
-    assert_equal  "1", find_field('compute_attribute[vm_attrs][cores]').value
+    assert click_link(compute_resources(:mycompute).to_s)
+    assert_equal  "2048 MB", find_field('compute_attribute_vm_attrs_memory').value
+    assert_equal  "1", find_field('compute_attribute_vm_attrs_cpus').value
   end
 
   test "index page" do

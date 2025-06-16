@@ -1,6 +1,3 @@
-require_dependency "proxy_api"
-require_dependency 'orchestration/queue'
-
 module Orchestration
   extend ActiveSupport::Concern
   include Orchestration::ProgressReport
@@ -162,27 +159,30 @@ module Orchestration
     end
 
     update_cache
-    # if we have no failures - we are done
-    return true if q.failed.empty? && q.pending.empty? && q.conflict.empty? && orchestration_errors?
 
-    logger.warn "Rolling back due to a problem: #{q.failed + q.conflict}"
+    if !q.failed.empty? || !q.conflict.empty?
+      logger.warn "Rolling back due to a problem: #{q.failed + q.conflict}"
+    elsif !q.pending.empty?
+      logger.warn "Rolling back due to unexpected pending task(s): #{q.pending}"
+    elsif !orchestration_errors?
+      logger.warn "Rolling back due to errors: #{errors}"
+    else
+      # if we have no failures - we are done
+      return true
+    end
     fail_queue(q)
 
     rollback
   ensure
-    unless q.nil?
-      if processed > 0
-        logger.info("Processed #{processed} tasks from queue '#{q.name}', completed #{q.completed.count}/#{q.all.count}") unless q.empty?
-        # rubocop:disable Rails/FindEach
-        q.all.each do |task|
-          msg = "Task '#{task.name}' *#{task.status}*"
-          if task.status?(:completed) || task.status?(:pending)
-            logger.debug msg
-          else
-            logger.error msg
-          end
+    if !q.nil? && (processed > 0)
+      logger.info("Processed #{processed} tasks from queue '#{q.name}', completed #{q.completed.count}/#{q.all.count}") unless q.empty?
+      q.all.each do |task| # rubocop:disable Rails/FindEach
+        msg = "Task '#{task.name}' *#{task.status}*"
+        if task.status?(:completed) || task.status?(:pending)
+          logger.debug msg
+        else
+          logger.error msg
         end
-        # rubocop:enable Rails/FindEach
       end
     end
   end
